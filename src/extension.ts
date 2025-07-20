@@ -27,8 +27,59 @@ const VAR_STYLES: { id: VarStyle; desc: string }[] = [
 ];
 
 export function activate(context: vscode.ExtensionContext) {
-  const cmd = "SmartVariables.suggest";
-  const disposable = vscode.commands.registerCommand(cmd, async () => {
+  const statusBarItem = createStatusBarItem();
+  context.subscriptions.push(statusBarItem);
+
+  const quickToggleCommand = registerQuickToggleCommand(statusBarItem);
+  context.subscriptions.push(quickToggleCommand);
+
+  const suggestCommand = registSuggestCommand(statusBarItem);
+  context.subscriptions.push(suggestCommand);
+}
+
+function createStatusBarItem(): vscode.StatusBarItem {
+  const statusBarItem = vscode.window.createStatusBarItem(
+    vscode.StatusBarAlignment.Right,
+    100
+  );
+  const text = getConfigValue<string>(ConfigKey.PREFERRED_STYLE) || "auto";
+  statusBarItem.command = "SmartVariables.toggle";
+  statusBarItem.tooltip = getTooltipText(text);
+  statusBarItem.text = "$(sparkle-filled)";
+  statusBarItem.show();
+  return statusBarItem;
+}
+
+function getTooltipText(text: string): string {
+  return `当前已切换为${text}模式`;
+}
+
+function registerQuickToggleCommand(statusBarItem: vscode.StatusBarItem) {
+  const toggleCmd = "SmartVariables.toggle";
+  const disposable = vscode.commands.registerCommand(toggleCmd, async () => {
+    // 每次点击按钮时重新获取最新的配置值
+    const currentStyle = getConfigValue<string>(ConfigKey.PREFERRED_STYLE);
+    const newStyle = currentStyle === "auto" ? "ask" : "auto";
+    await vscode.workspace
+      .getConfiguration(CONFIG_SECTION)
+      .update(
+        ConfigKey.PREFERRED_STYLE,
+        newStyle,
+        vscode.ConfigurationTarget.Global
+      );
+    const tooltipText = getTooltipText(newStyle === "auto" ? "自动" : "手动");
+    statusBarItem.tooltip = tooltipText;
+    vscode.window.setStatusBarMessage(tooltipText, 1500);
+  });
+  return disposable;
+}
+
+// 注册键盘快捷键触发命令
+function registSuggestCommand(
+  statusBarItem: vscode.StatusBarItem
+): vscode.Disposable {
+  const suggestCmd = "SmartVariables.suggest";
+  const disposable = vscode.commands.registerCommand(suggestCmd, async () => {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
       return;
@@ -43,13 +94,10 @@ export function activate(context: vscode.ExtensionContext) {
 
     const style = await detectStyle();
     const prompt = buildPrompt(meaning, style);
-    context.subscriptions.push(disposable);
     try {
-      const statusBarItem = vscode.window.setStatusBarMessage(
-        "$(loading~spin) 正在生成变量名，请稍候..."
-      );
+      statusBarItem.text = "$(loading~spin)";
       const candidates = await callLLM(prompt);
-      statusBarItem.dispose();
+      statusBarItem.text = "$(sparkle-filled)";
       if (candidates.length === 0) {
         vscode.window.showErrorMessage("未生成任何变量名");
         return;
@@ -67,8 +115,7 @@ export function activate(context: vscode.ExtensionContext) {
       );
     }
   });
-
-  context.subscriptions.push(disposable);
+  return disposable;
 }
 
 // 检测当前变量命名风格

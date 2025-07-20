@@ -9,10 +9,16 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
+      {
+        "title": "切换变量命名风格",
+        "command": "SmartVariables.toggle"
+      },
       {
         "command": "SmartVariables.suggest",
         "title": "AI变量命名"
