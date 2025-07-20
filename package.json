@@ -1,0 +1,75 @@
+{
+  "name": "smart-variables",
+  "displayName": "Smart Variables",
+  "description": "",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.102.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "SmartVariables.suggest",
+        "title": "AI变量命名"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "SmartVariables.suggest",
+        "key": "ctrl+alt+n",
+        "mac": "cmd+alt+n",
+        "when": "editorTextFocus"
+      }
+    ],
+    "configuration": {
+      "title": "Smart Variables",
+      "properties": {
+        "SmartVariables.preferredStyle": {
+          "type": "string",
+          "enum": ["auto", "camel", "snake", "hungarian"],
+          "enumDescriptions": [
+            "auto（自动）：根据上下文智能选择命名风格。",
+            "camel（驼峰命名法）：如 myVariableName，常用于 JavaScript、Java 等。",
+            "snake（蛇形命名法）：如 my_variable_name，常用于 Python、C 等。",
+            "hungarian（匈牙利命名法）：如 strMyVariable，变量名前加类型前缀。"
+          ],
+          "default": "auto",
+          "description": "选择命名风格：camel（驼峰）、snake（蛇形）、hungarian（匈牙利）。"
+        },
+        "SmartVariables.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "DeepSeek API 密钥。请在 https://deepseek.com/ 注册获取。",
+          "markdownDescription": "DeepSeek API 密钥。请在 [DeepSeek](https://deepseek.com/) 注册获取。"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "pnpm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "pnpm run compile && pnpm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.102.0",
+    "@typescript-eslint/eslint-plugin": "^8.31.1",
+    "@typescript-eslint/parser": "^8.31.1",
+    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-electron": "^2.5.2",
+    "eslint": "^9.25.1",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "axios": "^1.10.0"
+  }
+}
