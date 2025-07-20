@@ -43,11 +43,13 @@ export function activate(context: vscode.ExtensionContext) {
 
     const style = await detectStyle();
     const prompt = buildPrompt(meaning, style);
-    const statusMessage =
-      vscode.window.setStatusBarMessage("正在生成变量名...");
+    context.subscriptions.push(disposable);
     try {
+      const statusBarItem = vscode.window.setStatusBarMessage(
+        "$(loading~spin) 正在生成变量名，请稍候..."
+      );
       const candidates = await callLLM(prompt);
-      statusMessage.dispose();
+      statusBarItem.dispose();
       if (candidates.length === 0) {
         vscode.window.showErrorMessage("未生成任何变量名");
         return;
@@ -69,7 +71,8 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(disposable);
 }
 
-async function detectStyle() {
+// 检测当前变量命名风格
+async function detectStyle(): Promise<VarStyle> {
   // 1. 查找当前配置是自动模式还是手动模式
   const preferredStyle = getConfigValue<string>(ConfigKey.PREFERRED_STYLE);
   // 2. 如果是自动模式，则根据代码行内容判断变量命名风格
@@ -82,14 +85,29 @@ async function detectStyle() {
       return getVarStyleByLine(lang, line);
     }
   } else {
+    // 3. 如果是手动模式，则弹出选择框让用户选择
     const quickPickItems: vscode.QuickPickItem[] = VAR_STYLES.map((s) => ({
       label: s.id,
       description: s.desc,
       picked: s.id === preferredStyle,
     }));
-    const style = await vscode.window.showQuickPick(quickPickItems);
-    return style?.label as VarStyle;
+
+    const style = await vscode.window.showQuickPick(quickPickItems, {
+      placeHolder: "选择变量命名风格",
+      ignoreFocusOut: true, // 防止用户意外点击外部关闭
+    });
+
+    // 处理用户取消选择的情况
+    if (!style) {
+      vscode.window.showWarningMessage(
+        "未选择变量风格，将使用默认风格（小驼峰）"
+      );
+      return VarStyle.Camel;
+    }
+
+    return style.label as VarStyle;
   }
+
   // 默认返回小驼峰
   return VarStyle.Camel;
 }
@@ -133,8 +151,8 @@ export function getVarStyleByLine(langugage: string, line: string): VarStyle {
       if (/^\s*const\s+/.test(line)) {
         return VarStyle.Camel;
       }
-      // 检查是否为类声明
-      if (/^\s*class\s+\w+/.test(line)) {
+      // 检查是否为类、接口、枚举声明
+      if (/^\s*(class|interface|enum)\s+\w+/.test(line)) {
         return VarStyle.Pascal;
       }
       return VarStyle.Camel;
@@ -150,6 +168,7 @@ function getConfigValue<T>(key: string): T | undefined {
   return cfg.get<T>(key);
 }
 
+// 构建提示词
 function buildPrompt(meaning: string, style: VarStyle, count: number = 6) {
   return `
   输入含义：${meaning}
@@ -159,9 +178,9 @@ function buildPrompt(meaning: string, style: VarStyle, count: number = 6) {
   3. 优先简短、无歧义，可含常见缩写。
   4. 一个单词也可作为变量名。
   `.trim();
-  return "";
 }
 
+// 调用 LLM API 获取变量名建议
 export async function callLLM(prompt: string): Promise<string[]> {
   const apiKey = getConfigValue<string>(ConfigKey.API_KEY);
   if (!apiKey) {
