@@ -8,8 +8,10 @@ import { ConfigService } from "../services/configService";
 export class StatusBarManager {
   private statusBarItem: vscode.StatusBarItem;
   private configService: ConfigService;
+  private extensionName: string;
 
-  constructor() {
+  constructor(extensionName: string = "Smart Variables") {
+    this.extensionName = extensionName;
     this.configService = new ConfigService();
     this.statusBarItem = this.createStatusBarItem();
   }
@@ -22,10 +24,12 @@ export class StatusBarManager {
       vscode.StatusBarAlignment.Right,
       100
     );
-    const text = this.configService.getConfigValue<string>(ConfigKey.PREFERRED_STYLE) || "auto";
+    const text =
+      this.configService.getConfigValue<string>(ConfigKey.PREFERRED_STYLE) ||
+      "auto";
     statusBarItem.command = "SmartVariables.toggle";
     statusBarItem.tooltip = this.getTooltipText(text);
-    statusBarItem.text = "$(edit-sparkle) 智能变量生成器";
+    statusBarItem.text = `$(edit-sparkle) ${this.extensionName}`;
     statusBarItem.show();
     return statusBarItem;
   }
@@ -41,7 +45,9 @@ export class StatusBarManager {
    * 设置加载状态
    */
   public setLoading(isLoading: boolean): void {
-    this.statusBarItem.text = isLoading ? "$(loading~spin) 正在生成中..." : "$(edit-sparkle) 智能变量生成器";
+    this.statusBarItem.text = isLoading
+      ? "$(loading~spin) 正在生成中..."
+      : `$(edit-sparkle) ${this.extensionName}`;
   }
 
   /**

@@ -6,8 +6,9 @@ import { CommandManager } from "./commands/commandManager";
  * 扩展激活函数
  */
 export function activate(context: vscode.ExtensionContext): void {
-  // 创建状态栏管理器
-  const statusBarManager = new StatusBarManager();
+  // 创建状态栏管理器，传递扩展上下文
+  const statusBarManager = new StatusBarManager(context.extension.packageJSON.displayName);
+  console.log('package.json', context.extension.packageJSON);
   context.subscriptions.push(statusBarManager.getStatusBarItem());
 
   // 创建命令管理器
