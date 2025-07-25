@@ -1,18 +1,42 @@
 {
   "name": "smart-variables",
   "displayName": "Smart Variables",
-  "description": "",
+  "description": "使用AI智能生成符合编程规范的变量名、方法名和属性名",
   "version": "0.0.1",
+  "publisher": "Samoy",
+  "icon": "images/logo.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/samoy/smart-variables"
+  },
+  "keywords": [
+    "Smart Variables",
+    "Variables",
+    "Named",
+    "变量命名",
+    "AI",
+    "智能编码",
+    "代码辅助",
+    "命名规范"
+  ],
   "engines": {
-    "vscode": "^1.102.0"
+    "vscode": "^1.100.0"
   },
   "categories": [
+    "Programming Languages",
+    "Snippets",
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
+      {
+        "title": "切换变量命名风格",
+        "command": "SmartVariables.toggle"
+      },
       {
         "command": "SmartVariables.suggest",
         "title": "AI变量命名"
@@ -29,23 +53,33 @@
     "configuration": {
       "title": "Smart Variables",
       "properties": {
-        "SmartVariables.preferredStyle": {
-          "type": "string",
-          "enum": ["auto", "camel", "snake", "hungarian"],
-          "enumDescriptions": [
-            "auto（自动）：根据上下文智能选择命名风格。",
-            "camel（驼峰命名法）：如 myVariableName，常用于 JavaScript、Java 等。",
-            "snake（蛇形命名法）：如 my_variable_name，常用于 Python、C 等。",
-            "hungarian（匈牙利命名法）：如 strMyVariable，变量名前加类型前缀。"
-          ],
-          "default": "auto",
-          "description": "选择命名风格：camel（驼峰）、snake（蛇形）、hungarian（匈牙利）。"
-        },
         "SmartVariables.apiKey": {
           "type": "string",
           "default": "",
-          "description": "DeepSeek API 密钥。请在 https://deepseek.com/ 注册获取。",
-          "markdownDescription": "DeepSeek API 密钥。请在 [DeepSeek](https://deepseek.com/) 注册获取。"
+          "description": "OpenAI密钥，通常是以 sk- 开头的字符串"
+        },
+        "SmartVariables.modelId": {
+          "type": "string",
+          "default": "",
+          "description": "模型ID，如 gpt-3.5-turbo。"
+        },
+        "SmartVariables.baseUrl": {
+          "type": "string",
+          "default": "",
+          "description": "填写你的模型服务地址（可选）"
+        },
+        "SmartVariables.preferredStyle": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "ask"
+          ],
+          "enumDescriptions": [
+            "自动，根据当前编辑器语言和上下文推断",
+            "手动选择，每次都询问使用哪种风格生成"
+          ],
+          "default": "auto",
+          "description": "变量命名风格"
         }
       }
     }
@@ -61,7 +95,7 @@
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
-    "@types/vscode": "^1.102.0",
+    "@types/vscode": "^1.100.0",
     "@typescript-eslint/eslint-plugin": "^8.31.1",
     "@typescript-eslint/parser": "^8.31.1",
     "@vscode/test-cli": "^0.0.11",
@@ -70,6 +104,7 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "axios": "^1.10.0"
-  }
+    "openai": "^5.10.1"
+  },
+  "license": "MIT"
 }
