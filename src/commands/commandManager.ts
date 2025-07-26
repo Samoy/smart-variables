@@ -30,10 +30,10 @@ const VAR_STYLES: { id: VarStyle; desc: string }[] = [
  * 命令管理器
  */
 export class CommandManager {
-  private configService: ConfigService;
-  private styleDetector: StyleDetector;
-  private llmService: LLMService;
-  private statusBarManager: StatusBarManager;
+  accessor configService: ConfigService;
+  accessor styleDetector: StyleDetector;
+  accessor llmService: LLMService;
+  accessor statusBarManager: StatusBarManager;
 
   constructor(statusBarManager: StatusBarManager) {
     this.configService = new ConfigService();
@@ -49,15 +49,17 @@ export class CommandManager {
     const toggleCmd = "SmartVariables.toggle";
     return vscode.commands.registerCommand(toggleCmd, async () => {
       // 每次点击按钮时重新获取最新的配置值
-      const currentStyle = this.configService.getConfigValue<string>(ConfigKey.PREFERRED_STYLE);
+      const currentStyle = this.configService.getConfigValue<string>(
+        ConfigKey.PREFERRED_STYLE
+      );
       const newStyle = currentStyle === "auto" ? "ask" : "auto";
-      
+
       await this.configService.updateConfigValue(
         ConfigKey.PREFERRED_STYLE,
         newStyle,
         vscode.ConfigurationTarget.Global
       );
-      
+
       this.statusBarManager.updateTooltip(newStyle);
     });
   }
@@ -85,16 +87,22 @@ export class CommandManager {
       try {
         const style = await this.detectStyle();
         this.statusBarManager.setLoading(true);
-        
+
         // 获取上下文信息
         const context = {
           language: editor.document.languageId,
-          currentLine: editor.document.lineAt(editor.selection.active.line).text
+          currentLine: editor.document.lineAt(editor.selection.active.line)
+            .text,
         };
-        
-        const candidates = await this.llmService.generateVariableNames(meaning, style, 6, context);
+
+        const candidates = await this.llmService.generateVariableNames(
+          meaning,
+          style,
+          6,
+          context
+        );
         this.statusBarManager.setLoading(false);
-        
+
         if (candidates.length === 0) {
           vscode.window.showErrorMessage("未生成任何变量名");
           return;
@@ -108,11 +116,15 @@ export class CommandManager {
           return;
         }
 
-        editor.edit((editBuilder) => editBuilder.insert(editor.selection.active, selected));
+        editor.edit((editBuilder) =>
+          editBuilder.insert(editor.selection.active, selected)
+        );
       } catch (error) {
         this.statusBarManager.setLoading(false);
         vscode.window.showErrorMessage(
-          `生成变量名失败：${error instanceof Error ? error.message : String(error)}`
+          `生成变量名失败：${
+            error instanceof Error ? error.message : String(error)
+          }`
         );
       }
     });
@@ -121,10 +133,12 @@ export class CommandManager {
   /**
    * 检测当前变量命名风格
    */
-  private async detectStyle(): Promise<VarStyle> {
+  async detectStyle(): Promise<VarStyle> {
     // 1. 查找当前配置是自动模式还是手动模式
-    const preferredStyle = this.configService.getConfigValue<string>(ConfigKey.PREFERRED_STYLE);
-    
+    const preferredStyle = this.configService.getConfigValue<string>(
+      ConfigKey.PREFERRED_STYLE
+    );
+
     // 2. 如果是自动模式，则根据代码行内容判断变量命名风格
     if (preferredStyle === "auto") {
       const editor = vscode.window.activeTextEditor;
